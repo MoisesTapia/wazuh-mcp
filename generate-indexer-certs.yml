@@ -1,0 +1,15 @@
+# Genera los certificados SSL necesarios para el stack de Wazuh.
+# Ejecutar UNA SOLA VEZ antes de levantar el stack:
+#
+#   docker compose -f generate-indexer-certs.yml run --rm generator
+#
+# Los certificados se guardan en config/wazuh_indexer_ssl_certs/
+# No volver a ejecutar a menos que quieras regenerar los certs (invalidará el stack existente).
+
+services:
+  generator:
+    image: wazuh/wazuh-certs-generator:0.0.2
+    hostname: wazuh-certs-generator
+    volumes:
+      - ./config/wazuh_indexer_ssl_certs/:/certificates/
+      - ./config/certs.yml:/config/certs.yml
