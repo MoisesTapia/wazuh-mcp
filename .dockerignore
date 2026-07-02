@@ -1,0 +1,29 @@
+# Keep the build context small and free of secrets.
+.git/
+.gitignore
+.venv/
+.env
+.env.example
+
+# Python caches / build artifacts
+**/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Not needed to build or run the MCP server image
+tests/
+docs/
+scripts/
+config/
+Makefile
+docker-compose.yml
+generate-indexer-certs.yml
+Dockerfile
+.dockerignore
+README.md
+
+# Editor / IDE
+.idea/
+.claude/

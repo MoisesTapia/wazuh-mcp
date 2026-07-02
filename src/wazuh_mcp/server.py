@@ -107,11 +107,13 @@ observability.register(mcp, client, indexer)
 # ── HTTP authentication helpers ───────────────────────────────────────────────
 
 def _check_http_security(transport: str, api_key: str | None) -> None:
-    """Raise ValueError when HTTP transport is selected without an API key.
+    """Raise ValueError when HTTP transport is selected without a usable API key.
 
-    Separated from run() so it can be tested without starting a real server.
+    Rejects None, empty and whitespace-only keys: an empty Bearer token would
+    otherwise let ``Authorization: Bearer `` through. Separated from run() so it
+    can be tested without starting a real server.
     """
-    if transport != "stdio" and api_key is None:
+    if transport != "stdio" and not (api_key and api_key.strip()):
         raise ValueError(
             "MCP_API_KEY is required in HTTP mode. "
             "Use `openssl rand -hex 32` to generate one."

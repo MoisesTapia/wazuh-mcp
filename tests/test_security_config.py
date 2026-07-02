@@ -40,6 +40,14 @@ def test_stdio_mode_without_api_key_does_not_raise():
     _check_http_security("stdio", api_key=None)   # should be silent
 
 
+@pytest.mark.parametrize("blank_key", ["", "   ", "\t\n"])
+def test_http_mode_with_blank_api_key_raises_value_error(blank_key):
+    """An empty or whitespace-only key must be rejected — a blank Bearer token
+    would otherwise authenticate any request sending `Authorization: Bearer `."""
+    with pytest.raises(ValueError, match="MCP_API_KEY"):
+        _check_http_security("http", api_key=blank_key)
+
+
 async def test_http_request_without_authorization_header_returns_401():
     """HTTP requests without an Authorization header must receive 401 Unauthorized."""
 

@@ -1,4 +1,5 @@
 .PHONY: install dev run test test-integration test-all lint check-tools \
+        security security-deps security-licenses security-sast security-docker \
         certs docker-up docker-down docker-logs docker-status docker-reset \
         mcp-docker mcp-docker-down setup-claude-desktop wait-for-wazuh clean
 
@@ -75,6 +76,44 @@ lint:
 # Verifica que todas las tools registradas tienen docstring
 check-tools:
 	PYTHONPATH=src $(PYTHON) scripts/check_tools.py
+
+# ── DevSecOps: escaneos de seguridad (reportes a consola) ─────────────────────
+# Mismos escaneos que el workflow .github/workflows/devsecops.yml, en local.
+# Requiere las herramientas: pip install pip-audit "bandit[toml]" pip-licenses
+# y hadolint (o Docker) para el Dockerfile.
+# Report-only: los scanners no fallan el target (igual que continue-on-error en CI).
+
+security: security-deps security-licenses security-sast security-docker
+	@echo ""
+	@echo "Escaneos de seguridad completados."
+
+# Vulnerabilidades en dependencias
+security-deps:
+	@echo "── Dependency scan (pip-audit) ───────────────────────────────"
+	$(VENV)/bin/pip-audit --progress-spinner=off --desc || true
+
+# Licencias de dependencias + aviso de copyleft/unknown
+security-licenses:
+	@echo "── License scan (pip-licenses) ───────────────────────────────"
+	$(VENV)/bin/pip-licenses --order=license --format=markdown --with-urls
+	@$(VENV)/bin/pip-licenses --format=csv | grep -iE 'GPL|AGPL|LGPL|MPL|UNKNOWN' \
+		&& echo "AVISO: revisa las licencias copyleft/unknown de arriba." \
+		|| echo "Sin licencias copyleft/unknown."
+
+# SAST del código Python
+security-sast:
+	@echo "── SAST (bandit) ─────────────────────────────────────────────"
+	$(VENV)/bin/bandit -r src/ -ll -f screen || true
+
+# SAST/lint del Dockerfile (usa hadolint local, o Docker como fallback)
+security-docker:
+	@echo "── Dockerfile lint (hadolint) ────────────────────────────────"
+	@if command -v hadolint >/dev/null 2>&1; then \
+		hadolint Dockerfile || true; \
+	else \
+		docker run --rm -i -v "$(PWD)/.hadolint.yaml:/.hadolint.yaml" \
+			hadolint/hadolint hadolint - < Dockerfile || true; \
+	fi
 
 # ── Certificados SSL ──────────────────────────────────────────────────────────
 

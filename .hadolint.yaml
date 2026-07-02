@@ -1,0 +1,12 @@
+# hadolint configuration
+#
+# DL3008 (pin apt versions) and DL3013 (pin pip versions) are intentionally
+# ignored: pinning curl's apt version or pip's own version breaks on routine
+# Debian/pip point releases and provides little security benefit here — the
+# application dependency versions ARE constrained in pyproject.toml, which is
+# what the dependency scan (pip-audit) inspects.
+#
+# Revisit if a reproducible-build (hash-pinned) requirement is introduced.
+ignored:
+  - DL3008
+  - DL3013
