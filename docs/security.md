@@ -6,6 +6,7 @@ back to the LLM.
 
 - [TLS verification](#tls-verification)
 - [HTTP transport authentication](#http-transport-authentication)
+- [Network exposure & production checklist](#network-exposure--production-checklist)
 - [Audit logging](#audit-logging)
 - [Circuit breaker](#circuit-breaker)
 - [Output sanitization](#output-sanitization)
@@ -44,6 +45,46 @@ Generate a key with:
 ```bash
 openssl rand -hex 32
 ```
+
+---
+
+## Network exposure & production checklist
+
+> **The bundled stack is a local development stack.** It ships with **publicly
+> documented default credentials** (`admin` / `SecretPassword`, `wazuh-wui` /
+> `MyS3cr37P450r.*-`) whose Indexer bcrypt hashes are even committed in
+> `config/wazuh_indexer/internal_users.yml`. Running it unchanged on a
+> network-reachable host would expose OpenSearch and the Wazuh API with
+> credentials anyone can read from this repo.
+
+To keep the default safe, `docker-compose.yml` binds the **management surface**
+to loopback (`127.0.0.1`): REST API `55000`, Indexer `9200`, Dashboard `443`
+and MCP `8000` are only reachable from the host itself. The **agent-facing
+ports** (`1514`, `1515`, `514`) stay public because Wazuh agents on other hosts
+must reach them — they authenticate with agent keys, not the static admin
+credentials.
+
+Before exposing anything beyond `localhost`, work through this checklist:
+
+1. **Rotate every credential.** Change `WAZUH_PASSWORD`, `INDEXER_PASSWORD` and
+   the Dashboard password, and regenerate the Indexer hash in
+   `internal_users.yml`. See
+   [Configuration → Changing passwords](configuration.md#changing-passwords).
+2. **Enable TLS verification.** Set `WAZUH_VERIFY_SSL=true` or
+   `WAZUH_CA_BUNDLE`; drop the self-signed dev certificates.
+3. **Front the management ports with a TLS reverse proxy** instead of removing
+   the `127.0.0.1` binding. Do not publish `9200`/`55000`/`443`/`8000` directly
+   to the internet.
+4. **Set a strong `MCP_API_KEY`** (`openssl rand -hex 32`) and keep
+   `MCP_HOST=127.0.0.1` unless a proxy terminates TLS in front of it.
+5. **Restrict inbound access** with a host firewall / security group — expose
+   only what agents and operators actually need.
+6. **Ship the audit log off-host** (`LOG_FILE` + log shipping) so tool activity
+   is retained and monitored.
+
+Remember the current [auth model](#http-transport-authentication) is a single
+Bearer token with no per-tool RBAC: anyone holding the key can run every tool,
+including destructive active-response actions.
 
 ---
 

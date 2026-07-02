@@ -39,10 +39,15 @@ services:
         soft: 655360
         hard: 655360
     ports:
+      # Agent-facing ports stay public: Wazuh agents on other hosts connect
+      # here and authenticate with agent keys (not the static admin creds).
       - "1514:1514"        # Agent event receiver (TCP)
       - "1515:1515"        # Agent enrollment
       - "514:514/udp"      # Syslog
-      - "55000:55000"      # REST API
+      # Management surface — bound to loopback. It uses the documented dev
+      # credentials, so it must NOT be reachable from the network by default.
+      # To access from another host, front it with a TLS reverse proxy.
+      - "127.0.0.1:55000:55000"   # REST API
     environment:
       INDEXER_URL: https://wazuh.indexer:9200
       INDEXER_USERNAME: admin
@@ -98,7 +103,7 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - "9200:9200"        # OpenSearch REST API
+      - "127.0.0.1:9200:9200"     # OpenSearch REST API (loopback only)
     environment:
       OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
     volumes:
@@ -132,7 +137,7 @@ services:
     container_name: wazuh.dashboard
     restart: unless-stopped
     ports:
-      - "443:5601"         # Dashboard HTTPS → https://localhost
+      - "127.0.0.1:443:5601"      # Dashboard HTTPS → https://localhost (loopback only)
     environment:
       INDEXER_USERNAME: admin
       INDEXER_PASSWORD: ${INDEXER_PASSWORD:-SecretPassword}
@@ -200,7 +205,7 @@ services:
       # Definir en .env (nunca hardcodear). Genera una con: openssl rand -hex 32
       MCP_API_KEY: ${MCP_API_KEY:-}
     ports:
-      - "8000:8000"        # MCP HTTP → http://localhost:8000/mcp/
+      - "127.0.0.1:8000:8000"     # MCP HTTP → http://localhost:8000/mcp/ (loopback only)
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
       interval: 10s

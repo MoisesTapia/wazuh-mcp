@@ -21,7 +21,9 @@ Copy `.env.example` to `.env` and adjust the values.
 | **MCP HTTP** (if `mcp` profile) | `http://localhost:8000/mcp/` | Bearer token | `MCP_API_KEY` |
 
 > These are **development** credentials — do not use them in production.
-> See [Changing passwords](#changing-passwords) to harden them.
+> See [Changing passwords](#changing-passwords) to harden them, and the
+> [network exposure checklist](security.md#network-exposure--production-checklist)
+> before making the stack reachable beyond `localhost`.
 
 The MCP connects to the **REST API** with `wazuh-wui` / `MyS3cr37P450r.*-`.
 Do **not** use the dashboard `admin` / `SecretPassword` for the MCP — those are
