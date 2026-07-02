@@ -7,6 +7,7 @@ from typing import Any
 import httpx
 
 from .auth import JWTManager
+from .circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from .config import WazuhSettings
 
 RETRYABLE_STATUS = (429, 502, 503, 504)
@@ -28,6 +29,16 @@ class WazuhClient:
     def __init__(self, settings: WazuhSettings, auth: JWTManager) -> None:
         self._settings = settings
         self._auth = auth
+        # 5 fallos consecutivos -> OPEN, recupera en 60s
+        self._cb = CircuitBreaker(
+            name="wazuh-manager",
+            failure_threshold=5,
+            recovery_timeout=60.0,
+        )
+
+    @property
+    def circuit_breaker(self) -> CircuitBreaker:
+        return self._cb
 
     @staticmethod
     def _clean_params(params: dict | None) -> dict | None:
@@ -37,6 +48,30 @@ class WazuhClient:
         return cleaned or None
 
     async def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        content: str | bytes | None = None,
+        content_type: str | None = None,
+    ) -> Any:
+        """Ejecuta una request HTTP contra el Wazuh Manager, protegida por
+        el circuit breaker. Si el circuito esta OPEN, falla de inmediato
+        con un WazuhAPIError 503 sin intentar la conexion."""
+        try:
+            return await self._cb.call(
+                self._do_request(
+                    method, path,
+                    params=params, json=json,
+                    content=content, content_type=content_type,
+                )
+            )
+        except CircuitBreakerOpen as exc:
+            raise WazuhAPIError(str(exc), status_code=503) from exc
+
+    async def _do_request(
         self,
         method: str,
         path: str,

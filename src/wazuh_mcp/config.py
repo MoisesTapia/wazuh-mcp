@@ -37,6 +37,15 @@ class WazuhSettings(BaseSettings):
     # Required when mcp_transport="http". Generate with: openssl rand -hex 32
     mcp_api_key: str | None = None
 
+    # ── Wazuh Indexer (OpenSearch) ────────────────────────────────────────────────
+    # Wazuh 4.8.0+ almacena alertas y CVEs en el Indexer (puerto 9200).
+    # La Manager REST API ya no expone estos datos.
+    wazuh_indexer_host: str | None = None
+    wazuh_indexer_port: int = 9200
+    wazuh_indexer_user: str = "admin"
+    wazuh_indexer_password: str = "admin"
+    wazuh_indexer_verify_ssl: bool = False
+
     # ── Computed helpers ──────────────────────────────────────────────────────
 
     @property
@@ -51,6 +60,16 @@ class WazuhSettings(BaseSettings):
         otherwise falls back to wazuh_verify_ssl (True = system CAs, False = skip).
         """
         return self.wazuh_ca_bundle if self.wazuh_ca_bundle else self.wazuh_verify_ssl
+
+    @property
+    def indexer_url(self) -> str | None:
+        if not self.wazuh_indexer_host:
+            return None
+        return f"https://{self.wazuh_indexer_host}:{self.wazuh_indexer_port}"
+
+    @property
+    def indexer_configured(self) -> bool:
+        return self.wazuh_indexer_host is not None
 
     # ── Validators ────────────────────────────────────────────────────────────
 

@@ -5,6 +5,7 @@ from typing import Optional
 from fastmcp import FastMCP
 
 from ..client import WazuhClient
+from ..sanitize import sanitize_output
 
 
 def register(mcp: FastMCP, client: WazuhClient) -> None:
@@ -286,6 +287,7 @@ def register(mcp: FastMCP, client: WazuhClient) -> None:
         return await client.get(f"/cluster/{node_id}/stats/remoted")
 
     @mcp.tool()
+    @sanitize_output()
     async def get_cluster_node_logs(
         node_id: str,
         level: Optional[str] = None,

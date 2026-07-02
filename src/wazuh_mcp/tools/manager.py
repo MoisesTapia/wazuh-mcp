@@ -5,7 +5,7 @@ from typing import Optional
 from fastmcp import FastMCP
 
 from ..client import WazuhClient
-from ..sanitize import wrap_external_content
+from ..sanitize import sanitize_output, wrap_external_content
 
 
 def register(mcp: FastMCP, client: WazuhClient) -> None:
@@ -31,6 +31,7 @@ def register(mcp: FastMCP, client: WazuhClient) -> None:
         return await client.get("/manager/info")
 
     @mcp.tool()
+    @sanitize_output()
     async def get_manager_configuration(
         section: Optional[str] = None,
         field: Optional[str] = None,
@@ -71,6 +72,7 @@ def register(mcp: FastMCP, client: WazuhClient) -> None:
         )
 
     @mcp.tool()
+    @sanitize_output()
     async def get_manager_active_configuration(
         component: str,
         configuration: str,
@@ -163,6 +165,7 @@ def register(mcp: FastMCP, client: WazuhClient) -> None:
         return await client.get("/manager/daemons/stats", params=params)
 
     @mcp.tool()
+    @sanitize_output()
     async def get_manager_logs(
         level: Optional[str] = None,
         tag: Optional[str] = None,

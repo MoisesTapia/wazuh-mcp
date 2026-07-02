@@ -5,12 +5,13 @@ from typing import Optional
 from fastmcp import FastMCP
 
 from ..client import WazuhClient
-from ..sanitize import wrap_external_content
+from ..sanitize import sanitize_output, wrap_external_content
 
 
 def register(mcp: FastMCP, client: WazuhClient) -> None:
 
     @mcp.tool()
+    @sanitize_output()
     async def get_syscheck_results(
         agent_id: str,
         file: Optional[str] = None,

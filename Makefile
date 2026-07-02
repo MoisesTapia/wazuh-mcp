@@ -1,4 +1,4 @@
-.PHONY: install dev run test test-integration test-all lint \
+.PHONY: install dev run test test-integration test-all lint check-tools \
         certs docker-up docker-down docker-logs docker-status docker-reset \
         mcp-docker mcp-docker-down setup-claude-desktop wait-for-wazuh clean
 
@@ -48,6 +48,8 @@ lint:
 		src/wazuh_mcp/server.py \
 		src/wazuh_mcp/auth.py \
 		src/wazuh_mcp/config.py \
+		src/wazuh_mcp/circuit_breaker.py \
+		src/wazuh_mcp/tools/observability.py \
 		src/wazuh_mcp/tools/agents.py \
 		src/wazuh_mcp/tools/manager.py \
 		src/wazuh_mcp/tools/security.py \
@@ -63,11 +65,16 @@ lint:
 		src/wazuh_mcp/tools/lists.py \
 		src/wazuh_mcp/tools/logtest.py \
 		src/wazuh_mcp/tools/active_response.py \
+		src/wazuh_mcp/tools/active_response_soc.py \
 		src/wazuh_mcp/tools/ciscat.py \
 		src/wazuh_mcp/tools/events.py \
 		src/wazuh_mcp/tools/overview.py \
 		src/wazuh_mcp/tools/experimental.py
 	@echo "Sin errores de sintaxis."
+
+# Verifica que todas las tools registradas tienen docstring
+check-tools:
+	PYTHONPATH=src $(PYTHON) scripts/check_tools.py
 
 # ── Certificados SSL ──────────────────────────────────────────────────────────
 

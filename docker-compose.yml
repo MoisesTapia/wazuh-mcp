@@ -187,6 +187,12 @@ services:
       WAZUH_USER: ${WAZUH_USER:-wazuh-wui}
       WAZUH_PASSWORD: ${WAZUH_PASSWORD:-MyS3cr37P450r.*-}
       WAZUH_VERIFY_SSL: "false"
+      # Wazuh Indexer — habilita tools SOC de alertas y CVEs
+      WAZUH_INDEXER_HOST: wazuh.indexer
+      WAZUH_INDEXER_PORT: "9200"
+      WAZUH_INDEXER_USER: admin
+      WAZUH_INDEXER_PASSWORD: ${INDEXER_PASSWORD:-SecretPassword}
+      WAZUH_INDEXER_VERIFY_SSL: "false"
       MCP_TRANSPORT: http
       MCP_HOST: "0.0.0.0"
       MCP_PORT: "8000"
